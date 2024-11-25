@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PongJS</title>
+</head>
+<body>
+    <canvas id="myCanvas" width="800" height="600" style="border:1px solid #000000;">
+    </canvas>
+
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden; /* Hide scrollbars */
+        }
+    </style>
+
+<script>
+    // Connecting Canvas to JavaScript
+    var canvas = document.getElementById("myCanvas");
+    var context = canvas.getContext("2d");
+
+    // Player1
+    var x = 20;
+    var y = canvas.height / 3;
+    var w = 40;
+    var h = 200;
+    var color = "#00000f";
+    var speed = 5;
+    var key = "";
+	
+	//Player2
+	var x2 = 740;
+    var y2 = canvas.height / 3;
+    var w2 = 40;
+    var h2 = 200;
+    var color = "#00000f";
+    var speed2 = 5;
+	
+	//points
+	var player1point = 0;
+	var player2point = 0;
+	
+	var player1pointed = false;
+	var player2pointed = false;
+
+    // Pause state
+    var isPaused = true;
+
+    // Player keys
+    var moveUP = false;
+    var moveDOWN = false;
+	var moveUP2 = false;
+    var moveDOWN2 = false;
+
+    var _keyDown = function(e) {
+        key = e.keyCode;
+
+        switch (e.keyCode) {
+            case 87: // W
+                moveUP = true;
+                break;
+			
+			case 38: // ArrowUp
+                moveUP2 = true;
+                break;
+
+            case 83: // S
+                moveDOWN = true;
+                break;
+			
+			case 40: // ArrowDown
+                moveDOWN2 = true;
+                break;
+
+            case 32: // Space
+                isPaused = !isPaused;
+                break;
+
+            default:
+                console.log("keyDown: " + e.keyCode);
+                break;
+        }
+    }
+
+    var _keyUp = function(e) {
+        key = "";
+
+        switch (e.keyCode) {
+            case 87:
+                moveUP = false;
+                break;
+				
+			case 38: // ArrowUp
+                moveUP2 = false;
+                break;
+
+            case 83:
+                moveDOWN = false;
+                break;
+				
+			case 40: // ArrowDown
+                moveDOWN2 = false;
+                break;
+
+            default:
+                console.log("keyUp: " + e.keyCode);
+                break;    
+        }                
+    }
+
+    document.addEventListener("keydown", _keyDown, true);
+    document.addEventListener("keyup",   _keyUp,   true);
+
+    function updatePlayer() {
+        
+		if ( y + h > canvas.height){
+			
+		}
+		
+		if (moveUP) {
+            y -= speed * 1.5;
+        }
+        
+        if (moveDOWN) {
+            y += speed * 1.5;
+        }
+		
+    }
+	
+	function updatePlayer2(){
+		if (moveUP2) {
+            y2 -= speed * 1.5;
+        }
+		
+		if (moveDOWN2) {
+            y2 += speed * 1.5;
+        }
+	}
+
+    function drawPlayer(x, y, w, h, color) {
+        context.fillStyle = color;
+        context.fillRect(x, y, w, h);
+    }
+	
+	function drawPlayer2(x2, y2, w2, h2, color){
+		context.fillStyle = color;
+        context.fillRect(x2, y2, w2, h2);
+	}
+
+    // Ball
+    var ballX = canvas.width / 2;
+    var ballY = canvas.height / 2;
+    var radius = 20;
+    var ballSpeedX = 5;
+	var ballSpeedY  = 0;
+	var ballMaxSpeed = 60;
+	var ballUpdateSpeed = 1.07;
+
+    function drawCircle(ballX, ballY, radius, color) {
+        context.fillStyle = color;
+        context.beginPath();
+        context.arc(ballX, ballY, radius, 0, 2 * Math.PI);
+        context.fill();
+    }
+
+    function updateBall() {
+        ballX += ballSpeedX;
+		ballY += ballSpeedY;
+
+        // Collision with canvas
+        if (ballX + radius > canvas.width) {
+            ballSpeedX *= -ballUpdateSpeed;
+			player1point += 1;
+			ballX = canvas.width / 2;
+			ballY = canvas.height / 2;
+			
+			ballSpeedX = -5;
+			ballSpeedY = 0;
+			
+			isPaused = true;
+        }
+		
+		if (ballX - radius < 0){
+			ballSpeedX *= -ballUpdateSpeed;
+			player2point += 1;
+			ballX = canvas.width / 2;
+			ballY = canvas.height / 2;
+			
+			ballSpeedX = -5;
+			ballSpeedY = 0;
+			
+			isPaused = true;
+		}
+		
+		if (ballY - radius < 0 || ballY + radius > canvas.height){
+			ballSpeedY *= -1;
+		}
+
+        // Collision with player
+        if (
+            ballX - radius < x + w &&
+            ballX + radius > x &&
+            ballY + radius > y &&
+            ballY - radius < y + h
+        ) {
+            ballSpeedX *= -ballUpdateSpeed;
+			
+			 var hitPos = (ballY - (y + h / 2)) / (h / 2);
+			 
+			 ballSpeedY = hitPos * 5;
+        }
+		
+		// Collision with player2
+        if (
+            ballX - radius < x2 + w2 &&
+            ballX + radius > x2 &&
+            ballY + radius > y2 &&
+            ballY - radius < y2 + h2
+        ) {
+            ballSpeedX *= -ballUpdateSpeed;
+			
+			 var hitPos2 = (ballY - (y2 + h2 / 2)) / (h2 / 2);
+			 
+			 ballSpeedY = hitPos2 * 5;
+        }
+
+        switch (true) {
+            case ballSpeedX > ballMaxSpeed:
+                ballSpeedX = ballMaxSpeed;
+                break;
+            case ballSpeedX < -ballMaxSpeed:
+                ballSpeedX = -ballMaxSpeed;
+                break;
+            default:
+                break;
+        }
+    }
+	
+	//points
+	function drawPlayer1Points(){
+		context.fillStyle = "black";
+		context.font = "48px Arial";
+		context.textAlign = "center";
+		context.fillText(player1point, canvas.width / 4, canvas.height / 10);
+		
+	}
+	
+	function drawPlayer2Points(){
+		context.fillStyle = "black";
+		context.font = "48px Arial";
+		context.textAlign = "center";
+		context.fillText(player2point, (canvas.width / 2) + 200, canvas.height / 10);
+		
+	}
+	
+	function drawPoints(){
+		drawPlayer1Points();
+		drawPlayer2Points();
+		
+	}
+	
+	function drawPause() {
+    // PAUSE
+    context.fillStyle = "red";
+    context.font = "48px Arial";
+    context.textAlign = "center";
+    context.fillText("PAUSE", canvas.width / 2, canvas.height / 2 - 50);
+
+    context.fillStyle = "red";
+    context.font = "24px Arial";
+    context.textAlign = "center";
+    
+    context.fillText("W - Move Up", canvas.width / 4, canvas.height / 2 + 50);
+    context.fillText("S - Move Down", canvas.width / 4, canvas.height / 2 + 80);
+
+    context.fillText("↑ - Move Up", (3 * canvas.width) / 4, canvas.height / 2 + 50);
+    context.fillText("↓ - Move Down", (3 * canvas.width) / 4, canvas.height / 2 + 80);
+}
+
+    // GameLoop
+    function update() {
+        if (!isPaused) {
+            updatePlayer();
+			updatePlayer2();
+            updateBall();
+        }
+    }
+
+    function draw() {
+		context.fillStyle = "white";
+		context.fillRect(0, 0, canvas.width, canvas.height);
+		
+        //context.clearRect(0, 0, canvas.width, canvas.height);
+        drawPlayer(x, y, w, h, color);
+		drawPlayer2(x2, y2, w2, h2, color)
+        drawCircle(ballX, ballY, radius, color);
+		
+		drawPoints();
+
+        if (isPaused) {
+            drawPause();
+        }
+    }
+
+    function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop); // 60FPS
+    }
+
+    loop();
+</script>
+</body>
+</html>
